@@ -1,23 +1,36 @@
-#include "timep.h"
+#include <time.h>
+#include <stdio.h>
+#include <unistd.h>
 
-time_t tv_sec;
-long tv_nsec;
-timespec tsp, tsn;
- 
-// Initialize with 2.7 seconds
-// Equivalent to 2 seconds and 700 million nanoseconds
-tsp.tv_sec = 2;
-tsp.tv_nsec = 700000000;
+
+/*
+timespec est une structure définie dans <time.h> qui représente 
+une durée ou un point dans le temps. Elle contient deux membres : 
+tv_sec, qui représente les secondes, et tv_nsec, qui représente les nanosecondes.
+*/
+
 
 /*
 ‍Déclarez et implémentez les fonctions suivantes permettant de convertir
 des millisecondes en timespec et vice-versa: 
 */
 
+/*
+Pour le faire, il suffit de multiplier les secondes par 1000 pour obtenir les millisecondes, 
+et de diviser les nanosecondes par 1e6 pour les convertir en millisecondes. Car :
+1 s = 1000 ms
+1 ns = 1e-6 ms
+*/
 double timespec_to_ms(const timespec& time_ts){
     return (time_ts.tv_sec * 1000.0) + (time_ts.tv_nsec / 1e6);
 }
 
+/*
+Pour le faire, il faut diviser les millisecondes par 1000 pour obtenir les secondes,
+et multiplier les millisecondes par 1e6 pour les convertir en nanosecondes. Car :
+1 ms = 0.001 s  
+1 ms = 1e6 ns
+*/
 timespec timespec_from_ms(double time_ms){
     timespec ts;
     ts.tv_sec = (time_t)(time_ms / 1000.0);
@@ -99,9 +112,11 @@ timespec  operator- (const timespec& time_ts) {
 timespec  operator+ (const timespec& time1_ts, const timespec& time2_ts) {
     return timespec_add(time1_ts, time2_ts);
 }
+
 timespec  operator- (const timespec& time1_ts, const timespec& time2_ts) {
     return timespec_subtract(time1_ts, time2_ts);
 }
+
 timespec& operator+= (timespec& time_ts, const timespec& delay_ts) {
     time_ts = timespec_add(time_ts, delay_ts);
     return time_ts;
@@ -134,35 +149,67 @@ bool operator> (const timespec& time1_ts, const timespec& time2_ts) {
 */
 
 int main() {
+    timespec ts1, ts2;
+    ts1.tv_sec = 2;
+    ts1.tv_nsec = 700000000;    // construction manuelle d’un timespec
+    ts2.tv_sec = 1;
+    ts2.tv_nsec = 300000000;    // construction manuelle d’un timespec
+
+    printf("Timespec 1: %ld sec, %ld nsec\n", ts1.tv_sec, ts1.tv_nsec);
+    printf("Timespec 2: %ld sec, %ld nsec\n", ts2.tv_sec, ts2.tv_nsec);
+
+
     // Test conversion functions
-    double ms = timespec_to_ms(tsp);
+    double ms = timespec_to_ms(ts1);
+    printf("Original timespec: %ld sec, %ld nsec\n", ts1.tv_sec, ts1.tv_nsec);
+    printf("Converted to ms: %f ms\n", ms);
+
     timespec ts_from_ms = timespec_from_ms(ms);
+    printf("Converted back to timespec: %ld sec, %ld nsec\n", ts_from_ms.tv_sec, ts_from_ms.tv_nsec);
 
     // Test current time function
     timespec now = timespec_now();
+    printf("Current timespec: %ld sec, %ld nsec\n", now.tv_sec, now.tv_nsec);
 
     // Test negate function
-    timespec negated = timespec_negate(tsp);
+    timespec negated = timespec_negate(ts1);
+    printf("Negated timespec: %ld sec, %ld nsec\n", negated.tv_sec, negated.tv_nsec);
 
     // Test add and subtract functions
-    timespec added = timespec_add(tsp, ts_from_ms);
-    timespec subtracted = timespec_subtract(tsp, ts_from_ms);
+    timespec added = timespec_add(ts1, ts_from_ms);
+    printf("Added timespec: %ld sec, %ld nsec\n", added.tv_sec, added.tv_nsec);
+
+    timespec subtracted = timespec_subtract(ts1, ts_from_ms);
+    printf("Subtracted timespec: %ld sec, %ld nsec\n", subtracted.tv_sec, subtracted.tv_nsec);
 
     // Test wait function (uncomment to test)
-    // timespec_wait(tsp);
+    // timespec_wait(ts1);
 
     // Test operator overloads
-    timespec op_negated = -tsp;
-    timespec op_added = tsp + ts_from_ms;
-    timespec op_subtracted = tsp - ts_from_ms;
+    timespec op_negated = -ts1;
+    printf("Operator negated timespec: %ld sec, %ld nsec\n", op_negated.tv_sec, op_negated.tv_nsec);
 
-    tsp += ts_from_ms;
-    tsp -= ts_from_ms;
+    timespec op_added = ts1 + ts2;
+    printf("Operator added timespec: %ld sec, %ld nsec\n", op_added.tv_sec, op_added.tv_nsec);
 
-    bool eq = (tsp == ts_from_ms);
-    bool neq = (tsp != ts_from_ms);
-    bool lt = (tsp < ts_from_ms);
-    bool gt = (tsp > ts_from_ms);
+    timespec op_subtracted = ts1 - ts2;
+    printf("Operator subtracted timespec: %ld sec, %ld nsec\n", op_subtracted.tv_sec, op_subtracted.tv_nsec);
+
+
+    bool eq = (ts1 == ts2);
+    bool eq2 = (ts1 == ts1);
+
+    printf("Timespec 1 == Timespec 2: %s\n", eq ? "true" : "false");
+    printf("Timespec 1 == Timespec 1: %s\n", eq2 ? "true" : "false");
+
+    bool neq = (ts1 != ts_from_ms);
+    printf("Timespec 1 != Timespec from ms: %s\n", neq ? "true" : "false");
+
+    bool lt = (ts1 < ts_from_ms);
+    printf("Timespec 1 < Timespec from ms: %s\n", lt ? "true" : "false");
+
+    bool gt = (ts1 > ts_from_ms);
+    printf("Timespec 1 > Timespec from ms: %s\n", gt ? "true" : "false");
 
     return 0;
 }
